@@ -3,21 +3,30 @@ import './style.css'
 const app = document.querySelector('#app')
 
 const LEVELS = [
-  `Astronomers estimate that the Milky Way contains hundreds of billions of stars, and most of those stars orbit a supermassive black hole at the galactic center while radio telescopes map cold hydrogen clouds that reveal spiral structure.
+  {
+    title: 'Astronomy',
+    text: `Astronomers estimate that the Milky Way contains hundreds of billions of stars, and most of those stars orbit a supermassive black hole at the galactic center while radio telescopes map cold hydrogen clouds that reveal spiral structure.
 
 When a massive star exhausts nuclear fuel, gravity can collapse the core, and if the remnant mass is high enough no known force can stop further compression, producing a black hole with an event horizon that traps light.
 
-Spectroscopy lets researchers measure composition, temperature, and velocity, and by comparing spectral lines scientists infer motion through Doppler shifts across distant stellar systems.`,
-  `In classical mechanics, momentum equals mass multiplied by velocity, and conservation laws help physicists predict motion after collisions while energy transfer changes speed without violating total system balance.
+Spectroscopy lets researchers measure composition, temperature, and velocity, and by comparing spectral lines scientists infer motion through Doppler shifts across distant stellar systems.`
+  },
+  {
+    title: 'Physics',
+    text: `In classical mechanics, momentum equals mass multiplied by velocity, and conservation laws help physicists predict motion after collisions while energy transfer changes speed without violating total system balance.
 
 Quantum theory describes particles with probability amplitudes rather than fixed trajectories, and measurements collapse outcomes into values that experiments can record while interference patterns demonstrate wave behavior even for single electrons.
 
-Modern laboratories test these principles with superconducting circuits, where careful isolation reduces thermal and electromagnetic noise so measurements remain reproducible.`,
-  `Cells use membranes to regulate transport between internal and external environments, and membrane proteins act as channels, pumps, and receptors that maintain concentration gradients required for metabolism.
+Modern laboratories test these principles with superconducting circuits, where careful isolation reduces thermal and electromagnetic noise so measurements remain reproducible.`
+  },
+  {
+    title: 'Biology',
+    text: `Cells use membranes to regulate transport between internal and external environments, and membrane proteins act as channels, pumps, and receptors that maintain concentration gradients required for metabolism.
 
 In ecosystems, energy flows from producers to consumers and decomposers, while nutrient cycles return essential elements to soil, water, and atmosphere and population changes cascade through food webs.
 
 Computer scientists model these interactions with graph algorithms, using network analysis to identify hubs, bottlenecks, and resilient pathways in biological and ecological systems.`
+  }
 ]
 
 const BEST_SCORES_KEY = 'cursor-best-scores-v1'
@@ -39,13 +48,89 @@ const state = {
 
 const ui = {}
 
+const SoundSystem = (() => {
+  let audioContext = null
+  let masterGain = null
+
+  function getAudioContext() {
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)()
+      masterGain = audioContext.createGain()
+      masterGain.gain.value = 0.08
+      masterGain.connect(audioContext.destination)
+    }
+    return audioContext
+  }
+
+  function getMasterGain() {
+    getAudioContext()
+    return masterGain
+  }
+
+  function playTick() {
+    try {
+      const ctx = getAudioContext()
+      const now = ctx.currentTime
+
+      const osc = ctx.createOscillator()
+      const env = ctx.createGain()
+
+      osc.frequency.setValueAtTime(420, now)
+      osc.frequency.exponentialRampToValueAtTime(280, now + 0.04)
+
+      env.gain.setValueAtTime(0.15, now)
+      env.gain.exponentialRampToValueAtTime(0.01, now + 0.04)
+
+      osc.connect(env)
+      env.connect(getMasterGain())
+
+      osc.start(now)
+      osc.stop(now + 0.04)
+    } catch {
+      // Audio context unavailable, silently fail
+    }
+  }
+
+  function playChime() {
+    try {
+      const ctx = getAudioContext()
+      const now = ctx.currentTime
+
+      const notes = [
+        { freq: 528, duration: 0.3 },
+        { freq: 660, duration: 0.25 },
+        { freq: 792, duration: 0.4 }
+      ]
+
+      notes.forEach((note, index) => {
+        const osc = ctx.createOscillator()
+        const env = ctx.createGain()
+
+        osc.frequency.value = note.freq
+        env.gain.setValueAtTime(0.1, now + index * 0.05)
+        env.gain.exponentialRampToValueAtTime(0.01, now + index * 0.05 + note.duration)
+
+        osc.connect(env)
+        env.connect(getMasterGain())
+
+        osc.start(now + index * 0.05)
+        osc.stop(now + index * 0.05 + note.duration)
+      })
+    } catch {
+      // Audio context unavailable, silently fail
+    }
+  }
+
+  return { playTick, playChime }
+})()
+
 function createLayout() {
   app.innerHTML = `
     <main class="app-shell min-h-screen text-slate-900">
       <header class="app-topbar sticky top-0 z-10 flex items-center justify-between border-b border-slate-300/70 px-4 py-3 backdrop-blur sm:px-6">
         <div class="flex items-baseline gap-3">
           <h1 class="text-base font-semibold tracking-tight">Cursor</h1>
-          <span class="hidden text-xs uppercase tracking-[0.2em] text-slate-500 sm:inline">Text Navigation Puzzle</span>
+          <span class="hidden text-xs uppercase tracking-[0.2em] text-slate-500 sm:inline" id="levelTitle">Text Navigation Puzzle</span>
         </div>
         <div class="flex items-center gap-4 text-sm font-medium text-slate-600 sm:gap-6">
           <span id="levelLabel">Level 1 / ${LEVELS.length}</span>
@@ -111,6 +196,7 @@ function createLayout() {
   ui.levelLabel = document.getElementById('levelLabel')
   ui.movesLabel = document.getElementById('movesLabel')
   ui.bestLabel = document.getElementById('bestLabel')
+  ui.levelTitle = document.getElementById('levelTitle')
   ui.editorViewport = document.getElementById('editorViewport')
   ui.textGrid = document.getElementById('textGrid')
   ui.targetWordLabel = document.getElementById('targetWordLabel')
@@ -588,10 +674,22 @@ function checkWin() {
   }
 
   state.isWon = true
+  SoundSystem.playChime()
   const rank = getRank(state.moves, state.optimalMoves)
+  const isPrecisionBonus = state.moves === state.optimalMoves
   ui.resultText.textContent = `Finished in ${state.moves} moves`
-  ui.rankText.textContent = `Rank ${rank}`
+  ui.rankText.textContent = `Rank ${rank}${isPrecisionBonus ? ' ◆' : ''}`
+  ui.rankText.className = isPrecisionBonus ? 'precision-bonus' : ''
   ui.efficiencyText.textContent = `Optimal route estimate: ${state.optimalMoves} moves`
+
+  if (isPrecisionBonus) {
+    const precisionMsg = document.createElement('p')
+    precisionMsg.className = 'precision-msg'
+    precisionMsg.textContent = '✨ Perfect route! ✨'
+    setTimeout(() => {
+      ui.efficiencyText.parentElement.insertBefore(precisionMsg, ui.efficiencyText.nextSibling)
+    }, 100)
+  }
 
   const bestAfterWin = getBestForLevel(state.levelIndex)
   ui.bestResultText.textContent = isNewBest
@@ -626,6 +724,7 @@ function moveCursor(dx, dy) {
   state.preferredCol = next.preferredCol
   state.moves += 1
 
+  SoundSystem.playTick()
   renderFrame()
   checkWin()
 }
@@ -633,7 +732,8 @@ function moveCursor(dx, dy) {
 function setupLevel(index) {
   const wrappedIndex = (index + LEVELS.length) % LEVELS.length
   state.levelIndex = wrappedIndex
-  state.documentLines = linesFromParagraphText(LEVELS[wrappedIndex])
+  const levelData = LEVELS[wrappedIndex]
+  state.documentLines = linesFromParagraphText(levelData.text)
   state.wrappedLines = []
   state.cursor = { line: 0, col: 0 }
   state.preferredCol = 0
@@ -647,6 +747,7 @@ function setupLevel(index) {
   hideOverlay()
   ui.rankText.textContent = ''
   ui.efficiencyText.textContent = ''
+  ui.levelTitle.textContent = `Level ${wrappedIndex + 1} — ${levelData.title}`
 
   renderFrame()
 
