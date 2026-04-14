@@ -1,0 +1,308 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+:root {
+  --bg-base: rgb(245 243 240);
+  --bg-soft: rgb(252 251 249);
+  --bg-panel: rgb(244 248 251 / 0.84);
+  --ink: rgb(22 29 38);
+  --muted: rgb(91 105 122);
+  --accent-primary: rgb(86 148 184);
+  --accent-secondary: rgb(113 107 156);
+  --danger: rgb(204 69 78);
+  font-synthesis: none;
+  text-rendering: geometricPrecision;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 8% 8%, rgb(214 228 236 / 0.45), transparent 52%),
+    radial-gradient(circle at 85% 12%, rgb(216 208 230 / 0.26), transparent 44%),
+    linear-gradient(180deg, rgb(249 248 245), var(--bg-base));
+  color: var(--ink);
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.app-topbar {
+  background: linear-gradient(180deg, rgb(252 251 250 / 0.88), rgb(247 246 244 / 0.82));
+  box-shadow: inset 0 -1px 0 rgb(255 255 255 / 0.72);
+}
+
+.workspace-wrap {
+  height: calc(100vh - 65px);
+}
+
+.workspace-grid {
+  align-items: stretch;
+}
+
+.editor-shell {
+  border: 1px solid rgb(182 198 210 / 0.5);
+  background: linear-gradient(180deg, rgb(251 252 252 / 0.9), rgb(248 250 251 / 0.84));
+}
+
+.editor-viewport {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  background: linear-gradient(180deg, rgb(252 252 251), var(--bg-soft));
+}
+
+.editor-gutter {
+  background: linear-gradient(180deg, rgb(242 247 250 / 0.9), rgb(240 244 248 / 0.88));
+}
+
+.text-surface {
+  min-height: 100%;
+}
+
+.text-grid {
+  position: relative;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(16px, 1.48vw, 19px);
+  line-height: 1.56;
+  letter-spacing: 0.01em;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  color: rgb(35 45 60 / 0.93);
+  transition: opacity 180ms ease;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.text-grid.level-fade-in {
+  animation: level-fade-in 190ms ease;
+}
+
+.text-row {
+  display: block;
+  min-height: 1.56em;
+  line-height: 1.56;
+  white-space: nowrap;
+}
+
+.char-cell {
+  position: relative;
+  display: inline-block;
+  align-items: center;
+  justify-content: flex-start;
+  width: 1ch;
+  height: 1.56em;
+  white-space: pre;
+  vertical-align: bottom;
+}
+
+.blank-cell {
+  opacity: 0.01;
+}
+
+.cursor-beam {
+  display: inline-block;
+  align-self: stretch;
+  width: 0;
+  height: 1.4em;
+  border-left: 2px solid color-mix(in srgb, var(--accent-primary) 45%, rgb(2 6 23));
+  border-radius: 1px;
+  box-shadow: 0 0 0 1px rgb(120 171 198 / 0.16), 0 0 8px rgb(95 158 190 / 0.22);
+  opacity: 0.95;
+  pointer-events: none;
+  animation: cursor-blink 1.08s steps(1, end) infinite;
+  margin-right: -1px;
+}
+
+.target-flag {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  color: var(--danger);
+  font-size: 14px;
+  line-height: 1;
+  pointer-events: none;
+  transform: translate(-50%, -72%);
+  transform-origin: center bottom;
+  text-shadow: 0 1px 0 rgb(255 255 255 / 0.85);
+  transition: left 160ms ease, top 160ms ease, opacity 160ms ease;
+  animation: flag-float 1.8s ease-in-out infinite;
+}
+
+.side-panel {
+  background: linear-gradient(180deg, var(--bg-panel), rgb(238 244 248 / 0.8));
+  backdrop-filter: blur(4px);
+}
+
+.panel-label {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  color: rgb(88 102 121 / 0.9);
+}
+
+.info-block {
+  border: 1px solid rgb(167 191 208 / 0.42);
+  background: rgb(252 253 253 / 0.72);
+  padding: 0.75rem;
+}
+
+.info-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid rgb(175 190 207 / 0.35);
+  background: rgb(252 253 254 / 0.7);
+  padding: 0.55rem 0.65rem;
+  font-size: 12px;
+  color: rgb(73 87 106 / 0.92);
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.info-item:hover {
+  border-color: rgb(132 170 197 / 0.62);
+  background: rgb(249 252 253 / 0.96);
+}
+
+.shortcut-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.shortcut-item {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid rgb(167 190 209 / 0.42);
+  background: rgb(252 253 253 / 0.62);
+  color: rgb(62 76 93 / 0.92);
+  padding: 0.55rem 0.65rem;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-align: left;
+  border-radius: 8px;
+  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+
+.shortcut-item span {
+  opacity: 0.72;
+  font-weight: 400;
+  font-size: 11px;
+}
+
+.shortcut-item:hover {
+  border-color: color-mix(in srgb, var(--accent-primary) 48%, rgb(155 173 190));
+  background: rgb(246 251 253 / 0.95);
+  transform: translateX(2px);
+}
+
+#overlay {
+  transition: opacity 180ms ease;
+}
+
+.overlay-panel {
+  background: linear-gradient(180deg, rgb(252 253 254), rgb(246 248 250));
+  transform: translateY(8px) scale(0.985);
+  transition: transform 200ms ease;
+}
+
+#overlay.overlay-visible {
+  opacity: 1;
+}
+
+#overlay.overlay-visible .overlay-panel {
+  transform: translateY(0) scale(1);
+}
+
+.ui-btn {
+  border: 1px solid rgb(169 185 201);
+  background: rgb(255 255 255 / 0.9);
+  color: rgb(54 69 87);
+  border-radius: 8px;
+  padding: 0.5rem 0.95rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+
+.ui-btn:hover {
+  background: rgb(245 250 253);
+  border-color: color-mix(in srgb, var(--accent-primary) 42%, rgb(150 168 188));
+}
+
+.ui-btn-primary {
+  border-color: color-mix(in srgb, var(--accent-primary) 62%, rgb(44 63 81));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent-primary) 62%, rgb(43 63 80)), rgb(59 103 132));
+  color: rgb(245 249 252);
+}
+
+.ui-btn-primary:hover {
+  background: linear-gradient(180deg, rgb(74 124 158), rgb(57 100 130));
+}
+
+@keyframes cursor-blink {
+  0%,
+  46% {
+    opacity: 0.96;
+  }
+  52%,
+  94% {
+    opacity: 0.14;
+  }
+  100% {
+    opacity: 0.96;
+  }
+}
+
+@keyframes flag-float {
+  0%,
+  100% {
+    transform: translate(-50%, -72%);
+  }
+  50% {
+    transform: translate(-50%, -83%);
+  }
+}
+
+@keyframes level-fade-in {
+  from {
+    opacity: 0.36;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 1024px) {
+  .workspace-wrap {
+    height: auto;
+  }
+
+  .editor-shell {
+    height: calc(100vh - 230px);
+  }
+
+  .side-panel {
+    height: auto;
+  }
+}
