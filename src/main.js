@@ -192,7 +192,7 @@ const SoundSystem = (() => {
 function createLayout() {
   app.innerHTML = `
     <main class="app-shell text-slate-900">
-      <header class="app-topbar sticky top-0 z-10 border-b border-slate-300/70 px-4 py-3 backdrop-blur sm:px-6">
+      <header class="app-topbar sticky top-0 z-10 border-b border-slate-300/70 px-4 py-2 backdrop-blur sm:px-6">
         <div class="topbar-row">
           <div class="brand-wrap">
             <span class="brand-orb" aria-hidden="true"></span>
@@ -245,7 +245,6 @@ function createLayout() {
                 <p class="panel-label">How to Play</p>
                 <div class="shortcut-list mt-3">
                   <div class="shortcut-item">Arrow Keys <span>Move the cursor</span></div>
-                  <div class="shortcut-item">Shift + Arrow <span>Dash 3 quick steps</span></div>
                   <div class="shortcut-item">Editor Navigation <span>Move like a document cursor</span></div>
                   <div class="shortcut-item">Red Flag <span>Reach the exact line and column</span></div>
                   <div class="shortcut-item">Efficiency <span>Minimize moves for a better rank</span></div>
@@ -810,42 +809,33 @@ function checkWin() {
   showOverlay()
 }
 
-function moveCursor(dx, dy, stepCount = 1) {
+function moveCursor(dx, dy) {
   if (state.isWon) {
     return
   }
 
-  let moved = false
-  for (let step = 0; step < stepCount; step += 1) {
-    const previousDistance = getDistanceToTarget()
+  const previousDistance = getDistanceToTarget()
+  const next = applyMoveToState(
+    {
+      line: state.cursor.line,
+      col: state.cursor.col,
+      preferredCol: state.preferredCol
+    },
+    dx,
+    dy
+  )
 
-    const next = applyMoveToState(
-      {
-        line: state.cursor.line,
-        col: state.cursor.col,
-        preferredCol: state.preferredCol
-      },
-      dx,
-      dy
-    )
-
-    if (!next) {
-      break
-    }
-
-    state.cursor.line = next.line
-    state.cursor.col = next.col
-    state.preferredCol = next.preferredCol
-    state.moves += 1
-    moved = true
-
-    const nextDistance = getDistanceToTarget()
-    updateStreak(previousDistance, nextDistance)
-  }
-
-  if (!moved) {
+  if (!next) {
     return
   }
+
+  state.cursor.line = next.line
+  state.cursor.col = next.col
+  state.preferredCol = next.preferredCol
+  state.moves += 1
+
+  const nextDistance = getDistanceToTarget()
+  updateStreak(previousDistance, nextDistance)
 
   SoundSystem.playTick()
   renderFrame()
@@ -888,29 +878,28 @@ function setupLevel(index) {
 
 function handleKeyDown(event) {
   const key = event.key
-  const stepCount = event.shiftKey ? 3 : 1
 
   if (key === 'ArrowLeft') {
     event.preventDefault()
-    moveCursor(-1, 0, stepCount)
+    moveCursor(-1, 0)
     return
   }
 
   if (key === 'ArrowRight') {
     event.preventDefault()
-    moveCursor(1, 0, stepCount)
+    moveCursor(1, 0)
     return
   }
 
   if (key === 'ArrowUp') {
     event.preventDefault()
-    moveCursor(0, -1, stepCount)
+    moveCursor(0, -1)
     return
   }
 
   if (key === 'ArrowDown') {
     event.preventDefault()
-    moveCursor(0, 1, stepCount)
+    moveCursor(0, 1)
     return
   }
 
