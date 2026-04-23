@@ -5,6 +5,9 @@ const app = document.querySelector('#app')
 const LEVELS = [
   {
     title: 'Astronomy',
+    difficulty: 'Rookie',
+    challenge: 'Warm-up mission: learn line transitions and stop exactly on the marker.',
+    targetMode: 'random',
     text: `Astronomers estimate that the Milky Way contains hundreds of billions of stars, and most of those stars orbit a supermassive black hole at the galactic center while radio telescopes map cold hydrogen clouds that reveal spiral structure.
 
 When a massive star exhausts nuclear fuel, gravity can collapse the core, and if the remnant mass is high enough no known force can stop further compression, producing a black hole with an event horizon that traps light.
@@ -13,6 +16,9 @@ Spectroscopy lets researchers measure composition, temperature, and velocity, an
   },
   {
     title: 'Physics',
+    difficulty: 'Skilled',
+    challenge: 'Precision mission: use vertical moves wisely to maintain momentum streaks.',
+    targetMode: 'distance',
     text: `In classical mechanics, momentum equals mass multiplied by velocity, and conservation laws help physicists predict motion after collisions while energy transfer changes speed without violating total system balance.
 
 Quantum theory describes particles with probability amplitudes rather than fixed trajectories, and measurements collapse outcomes into values that experiments can record while interference patterns demonstrate wave behavior even for single electrons.
@@ -21,15 +27,71 @@ Modern laboratories test these principles with superconducting circuits, where c
   },
   {
     title: 'Biology',
+    difficulty: 'Skilled+',
+    challenge: 'Routing mission: weave between dense words and avoid over-shooting the target column.',
+    targetMode: 'edge',
     text: `Cells use membranes to regulate transport between internal and external environments, and membrane proteins act as channels, pumps, and receptors that maintain concentration gradients required for metabolism.
 
 In ecosystems, energy flows from producers to consumers and decomposers, while nutrient cycles return essential elements to soil, water, and atmosphere and population changes cascade through food webs.
 
 Computer scientists model these interactions with graph algorithms, using network analysis to identify hubs, bottlenecks, and resilient pathways in biological and ecological systems.`
+  },
+  {
+    title: 'Cybersecurity',
+    difficulty: 'Advanced',
+    challenge: 'Signal hunt: target is likely near punctuation in dense technical language.',
+    targetMode: 'punctuation',
+    text: `Security teams monitor authentication logs, endpoint telemetry, and network flow records to identify unusual behavior before attackers escalate privileges or move laterally across internal systems.
+
+Blue team analysts correlate indicators from multiple sensors, compare process ancestry trees, and isolate suspicious hosts while preserving forensic evidence needed for post-incident review.
+
+Effective defense relies on layered controls, rapid patch cycles, and realistic incident simulations that expose weak assumptions long before a real intrusion occurs.`
+  },
+  {
+    title: 'Climate Systems',
+    difficulty: 'Advanced+',
+    challenge: 'Long route mission: marker tends to spawn far from start across wrapped lines.',
+    targetMode: 'far',
+    text: `Climate researchers combine satellite observations, ocean buoy records, and paleoclimate proxies to estimate how temperature, precipitation, and atmospheric circulation respond to changing greenhouse gas concentrations.
+
+Regional impacts are uneven: some areas face prolonged drought and heat stress, while others experience stronger rainfall events, coastal flooding, and shifting storm patterns that challenge existing infrastructure.
+
+Adaptation planning uses scenario ensembles, uncertainty intervals, and risk maps so policymakers can prioritize investments with the greatest resilience payoff over decades.`
+  },
+  {
+    title: 'Neuroscience',
+    difficulty: 'Expert',
+    challenge: 'Column discipline: marker favors line ends, requiring careful horizontal control.',
+    targetMode: 'edge-far',
+    text: `Neural circuits process sensory input through distributed populations of cells whose firing patterns encode timing, intensity, and context before signals are integrated into perception and action.
+
+Modern experiments pair calcium imaging with closed-loop stimulation, allowing scientists to perturb selected neurons and observe how activity reorganizes across large cortical networks.
+
+Computational models test hypotheses about learning by comparing predicted spike statistics with observed recordings, revealing where assumptions about plasticity break down.`
+  },
+  {
+    title: 'Distributed Systems',
+    difficulty: 'Master',
+    challenge: 'High-pressure mission: marker appears in dense regions far from origin with minimal landmarks.',
+    targetMode: 'mixed-hard',
+    text: `Distributed services coordinate through message passing, replication protocols, and consensus algorithms that preserve correctness despite node failures, delayed packets, and partial network partitions.
+
+Engineers balance consistency, availability, and latency by selecting data models and quorum strategies that match product requirements while avoiding cascading retries during peak load.
+
+Observability is essential: structured logs, traces, and high-cardinality metrics help teams detect emergent bottlenecks and verify that remediation steps actually reduce tail latency.`
+  },
+  {
+    title: 'Deep Space Navigation',
+    difficulty: 'Legend',
+    challenge: 'Final gauntlet: marker is chosen from extreme and punctuation-heavy positions.',
+    targetMode: 'legend',
+    text: `Interplanetary guidance solutions account for gravitational assists, finite thrust windows, and communication delay, requiring trajectory planners to update state estimates with sparse and noisy measurements.
+
+Navigation teams validate burn sequences through Monte Carlo simulation, fault injection, and cross-checks between independent software stacks to reduce the probability of mission-ending deviation.
+
+During critical maneuvers, operators monitor telemetry envelopes in real time, compare residuals against expected bands, and commit contingency plans within tight decision deadlines.`
   }
 ]
-
-const BEST_SCORES_KEY = 'cursor-best-scores-v1'
 
 const state = {
   levelIndex: 0,
@@ -41,9 +103,12 @@ const state = {
   target: null,
   targetVisual: null,
   isWon: false,
-  bestScores: {},
   optimalMoves: 0,
-  maxCols: 80
+  maxCols: 80,
+  streak: 0,
+  bestStreak: 0,
+  lastDistance: 0,
+  levelData: null
 }
 
 const ui = {}
@@ -126,52 +191,66 @@ const SoundSystem = (() => {
 
 function createLayout() {
   app.innerHTML = `
-    <main class="app-shell min-h-screen text-slate-900">
-      <header class="app-topbar sticky top-0 z-10 flex items-center justify-between border-b border-slate-300/70 px-4 py-3 backdrop-blur sm:px-6">
-        <div class="flex items-baseline gap-3">
-          <h1 class="text-base font-semibold tracking-tight">Cursor</h1>
-          <span class="hidden text-xs uppercase tracking-[0.2em] text-slate-500 sm:inline" id="levelTitle">Text Navigation Puzzle</span>
+    <main class="app-shell text-slate-900">
+      <header class="app-topbar sticky top-0 z-10 border-b border-slate-300/70 px-4 py-3 backdrop-blur sm:px-6">
+        <div class="topbar-row">
+          <div class="brand-wrap">
+            <span class="brand-orb" aria-hidden="true"></span>
+            <div>
+              <h1 class="brand-title">Cursor Quest</h1>
+              <span class="brand-subtitle" id="levelTitle">Text Navigation Puzzle</span>
+            </div>
+          </div>
+
+          <div class="score-rack" aria-label="Run stats">
+            <span class="hud-pill" id="levelLabel">Level 1 / ${LEVELS.length}</span>
+            <span class="hud-pill" id="movesLabel">Moves 0</span>
+            <span class="hud-pill hud-pill-streak" id="streakLabel">Streak x0</span>
+            <span class="hud-pill hud-pill-heat" id="heatLabel">Flow 0%</span>
+          </div>
         </div>
-        <div class="flex items-center gap-4 text-sm font-medium text-slate-600 sm:gap-6">
-          <span id="levelLabel">Level 1 / ${LEVELS.length}</span>
-          <span id="movesLabel">Moves 0</span>
-          <span id="bestLabel">Best -</span>
-        </div>
+
       </header>
 
-      <section class="workspace-wrap px-4 py-4 sm:px-6 sm:py-5">
-        <div class="workspace-grid h-[calc(100vh-98px)] gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_340px]">
+      <section class="workspace-wrap px-3 py-3 sm:px-4 sm:py-3">
+        <div class="workspace-grid h-full gap-3 lg:grid lg:grid-cols-[minmax(0,1fr)_320px]">
           <div class="editor-shell">
-            <div id="editorViewport" class="editor-viewport relative h-full overflow-y-auto overflow-x-hidden border border-slate-300/60">
-              <div class="editor-gutter sticky left-0 top-0 z-10 h-full w-10 border-r border-slate-200/80"></div>
+            <div id="editorViewport" class="editor-viewport relative h-full overflow-y-auto overflow-x-hidden">
+              <div class="editor-gutter sticky left-0 top-0 z-10 h-full w-10"></div>
               <div id="textSurface" class="text-surface absolute inset-0 overflow-visible pl-14 pr-12 pt-12 pb-20">
                 <div id="textGrid" class="text-grid" aria-label="Game text"></div>
               </div>
             </div>
           </div>
 
-          <aside class="side-panel mt-4 h-80 border border-slate-300/60 p-8 lg:mt-0 lg:h-full">
-            <p class="panel-label">Objective</p>
-            <div class="info-block mt-3">
-              <p class="text-xs uppercase tracking-[0.16em] text-slate-500">Flag Position</p>
-              <p id="targetWordLabel" class="mt-2 text-base font-semibold text-slate-800">Line 1, Col 1</p>
-              <p id="targetMetaLabel" class="mt-2 text-xs text-slate-500">Match cursor to the red flag.</p>
-            </div>
+          <aside class="side-panel mt-2 p-5 lg:mt-0 lg:h-full">
+            <div class="side-panel-stack">
+              <p class="panel-label">Objective</p>
+              <div class="info-block mt-3">
+                <p class="text-xs uppercase tracking-[0.16em] text-slate-500">Flag Position</p>
+                <p id="targetWordLabel" class="mt-2 text-base font-semibold text-slate-800">Line 1, Col 1</p>
+                <p id="targetMetaLabel" class="mt-2 text-xs text-slate-500">Match cursor to the red flag.</p>
+              </div>
 
-            <p class="panel-label mt-8">Session</p>
-            <div class="info-list mt-3">
-              <div class="info-item"><span>Current Level</span><span id="panelLevelValue">1</span></div>
-              <div class="info-item"><span>Moves</span><span id="panelMovesValue">0</span></div>
-              <div class="info-item"><span>Optimal</span><span id="panelOptimalValue">0</span></div>
-              <div class="info-item"><span>Best</span><span id="panelBestValue">-</span></div>
-            </div>
+              <p class="panel-label mt-8">Session</p>
+              <div class="info-list mt-3">
+                <div class="info-item"><span>Current Level</span><span id="panelLevelValue">1</span></div>
+                <div class="info-item"><span>Difficulty</span><span id="panelDifficultyValue">Rookie</span></div>
+                <div class="info-item"><span>Moves</span><span id="panelMovesValue">0</span></div>
+                <div class="info-item"><span>Streak</span><span id="panelStreakValue">0</span></div>
+                <div class="info-item"><span>Optimal</span><span id="panelOptimalValue">0</span></div>
+              </div>
 
-            <p class="panel-label mt-8">How to Play</p>
-            <div class="shortcut-list mt-3">
-              <div class="shortcut-item">Arrow Keys <span>Move the cursor</span></div>
-              <div class="shortcut-item">Editor Navigation <span>Move like a document cursor</span></div>
-              <div class="shortcut-item">Red Flag <span>Reach the exact line and column</span></div>
-              <div class="shortcut-item">Efficiency <span>Minimize moves for a better rank</span></div>
+              <div class="howto-section">
+                <p class="panel-label">How to Play</p>
+                <div class="shortcut-list mt-3">
+                  <div class="shortcut-item">Arrow Keys <span>Move the cursor</span></div>
+                  <div class="shortcut-item">Shift + Arrow <span>Dash 3 quick steps</span></div>
+                  <div class="shortcut-item">Editor Navigation <span>Move like a document cursor</span></div>
+                  <div class="shortcut-item">Red Flag <span>Reach the exact line and column</span></div>
+                  <div class="shortcut-item">Efficiency <span>Minimize moves for a better rank</span></div>
+                </div>
+              </div>
             </div>
           </aside>
         </div>
@@ -181,9 +260,9 @@ function createLayout() {
         <div class="overlay-panel w-[92%] max-w-sm border border-slate-300 p-6 text-center">
           <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Level Complete</p>
           <p id="resultText" class="mt-2 text-2xl font-semibold tracking-tight text-slate-900"></p>
-          <p id="rankText" class="mt-2 text-base font-semibold text-sky-700"></p>
+          <p id="rankText" class="mt-2 text-base font-semibold text-slate-700"></p>
           <p id="efficiencyText" class="mt-2 text-sm font-medium text-slate-600"></p>
-          <p id="bestResultText" class="mt-2 text-sm font-medium text-slate-600"></p>
+          <p id="streakResultText" class="mt-1 text-sm font-medium text-slate-600"></p>
           <div class="mt-6 flex justify-center gap-3">
             <button id="nextBtn" class="ui-btn ui-btn-primary">Next Level</button>
             <button id="retryBtn" class="ui-btn">Retry</button>
@@ -195,50 +274,49 @@ function createLayout() {
 
   ui.levelLabel = document.getElementById('levelLabel')
   ui.movesLabel = document.getElementById('movesLabel')
-  ui.bestLabel = document.getElementById('bestLabel')
+  ui.streakLabel = document.getElementById('streakLabel')
+  ui.heatLabel = document.getElementById('heatLabel')
   ui.levelTitle = document.getElementById('levelTitle')
   ui.editorViewport = document.getElementById('editorViewport')
   ui.textGrid = document.getElementById('textGrid')
   ui.targetWordLabel = document.getElementById('targetWordLabel')
   ui.targetMetaLabel = document.getElementById('targetMetaLabel')
   ui.panelLevelValue = document.getElementById('panelLevelValue')
+  ui.panelDifficultyValue = document.getElementById('panelDifficultyValue')
   ui.panelMovesValue = document.getElementById('panelMovesValue')
+  ui.panelStreakValue = document.getElementById('panelStreakValue')
   ui.panelOptimalValue = document.getElementById('panelOptimalValue')
-  ui.panelBestValue = document.getElementById('panelBestValue')
   ui.overlay = document.getElementById('overlay')
   ui.resultText = document.getElementById('resultText')
   ui.rankText = document.getElementById('rankText')
   ui.efficiencyText = document.getElementById('efficiencyText')
-  ui.bestResultText = document.getElementById('bestResultText')
+  ui.streakResultText = document.getElementById('streakResultText')
   ui.nextBtn = document.getElementById('nextBtn')
   ui.retryBtn = document.getElementById('retryBtn')
 }
 
-function loadBestScores() {
-  try {
-    const raw = localStorage.getItem(BEST_SCORES_KEY)
-    if (!raw) {
-      return {}
-    }
-
-    const parsed = JSON.parse(raw)
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      return {}
-    }
-
-    return parsed
-  } catch {
-    return {}
+function getDistanceToTarget() {
+  if (!state.targetVisual) {
+    return 0
   }
+  return (
+    Math.abs(state.cursor.line - state.targetVisual.line) +
+    Math.abs(state.cursor.col - state.targetVisual.col)
+  )
 }
 
-function saveBestScores() {
-  localStorage.setItem(BEST_SCORES_KEY, JSON.stringify(state.bestScores))
-}
+function updateStreak(previousDistance, nextDistance) {
+  if (nextDistance < previousDistance) {
+    state.streak += 1
+  } else if (nextDistance > previousDistance) {
+    state.streak = Math.max(0, state.streak - 1)
+  }
 
-function getBestForLevel(levelIndex) {
-  const value = state.bestScores[levelIndex]
-  return Number.isFinite(value) ? value : null
+  if (state.streak > state.bestStreak) {
+    state.bestStreak = state.streak
+  }
+
+  state.lastDistance = nextDistance
 }
 
 function normalizeLevelText(text) {
@@ -265,7 +343,51 @@ function linesFromParagraphText(text) {
   return lines.length > 0 ? lines : ['']
 }
 
-function chooseFlagTarget(lines) {
+function pickByMode(lines, candidates, mode) {
+  if (mode === 'punctuation') {
+    const punctuationTargets = candidates.filter((point) => {
+      const char = lines[point.line][point.col]
+      return /[,:;.-]/.test(char)
+    })
+    if (punctuationTargets.length > 0) {
+      return punctuationTargets
+    }
+  }
+
+  if (mode === 'edge' || mode === 'edge-far') {
+    const edgeTargets = candidates.filter((point) => {
+      const line = lines[point.line]
+      return point.col <= 2 || point.col >= line.length - 3
+    })
+    if (edgeTargets.length > 0) {
+      return edgeTargets
+    }
+  }
+
+  if (mode === 'distance' || mode === 'far' || mode === 'edge-far' || mode === 'mixed-hard' || mode === 'legend') {
+    const threshold = mode === 'distance' ? 28 : 42
+    const distantTargets = candidates.filter((point) => point.line + point.col >= threshold)
+    if (distantTargets.length > 0) {
+      candidates = distantTargets
+    }
+  }
+
+  if (mode === 'mixed-hard' || mode === 'legend') {
+    const weighted = candidates.filter((point) => {
+      const line = lines[point.line]
+      const nearEdge = point.col <= 2 || point.col >= line.length - 3
+      const isPunctuation = /[,:;.-]/.test(line[point.col])
+      return nearEdge || isPunctuation
+    })
+    if (weighted.length > 0) {
+      return weighted
+    }
+  }
+
+  return candidates
+}
+
+function chooseFlagTarget(lines, mode = 'random') {
   const candidates = []
   lines.forEach((line, lineIndex) => {
     for (let col = 0; col < line.length; col += 1) {
@@ -278,7 +400,8 @@ function chooseFlagTarget(lines) {
   }
 
   const filtered = candidates.filter((point) => !(point.line === 0 && point.col === 0))
-  const pool = filtered.length > 0 ? filtered : candidates
+  const basePool = filtered.length > 0 ? filtered : candidates
+  const pool = pickByMode(lines, basePool, mode)
   return pool[Math.floor(Math.random() * pool.length)]
 }
 
@@ -609,17 +732,22 @@ function renderTextGrid() {
 function updateHud() {
   ui.levelLabel.textContent = `Level ${state.levelIndex + 1} / ${LEVELS.length}`
   ui.movesLabel.textContent = `Moves ${state.moves}`
+  ui.streakLabel.textContent = `Streak x${state.streak}`
 
-  const best = getBestForLevel(state.levelIndex)
-  ui.bestLabel.textContent = best === null ? 'Best -' : `Best ${best}`
+  const flowPercent = Math.min(100, state.streak * 12)
+  ui.heatLabel.textContent = `Flow ${flowPercent}%`
+  ui.heatLabel.classList.toggle('hud-pill-hot', flowPercent >= 72)
+
   ui.panelLevelValue.textContent = String(state.levelIndex + 1)
+  ui.panelDifficultyValue.textContent = state.levelData?.difficulty ?? 'Rookie'
   ui.panelMovesValue.textContent = String(state.moves)
+  ui.panelStreakValue.textContent = String(state.streak)
   ui.panelOptimalValue.textContent = String(state.optimalMoves)
-  ui.panelBestValue.textContent = best === null ? '-' : String(best)
 
   if (state.target) {
     ui.targetWordLabel.textContent = `Line ${state.target.line + 1}, Col ${state.target.col + 1}`
-    ui.targetMetaLabel.textContent = 'Move the cursor to this exact coordinate.'
+    const challengeText = state.levelData?.challenge ?? 'Move the cursor to this exact coordinate.'
+    ui.targetMetaLabel.textContent = challengeText
   }
 }
 
@@ -666,63 +794,58 @@ function checkWin() {
     return
   }
 
-  const previousBest = getBestForLevel(state.levelIndex)
-  const isNewBest = previousBest === null || state.moves < previousBest
-  if (isNewBest) {
-    state.bestScores[state.levelIndex] = state.moves
-    saveBestScores()
-  }
-
   state.isWon = true
   SoundSystem.playChime()
   const rank = getRank(state.moves, state.optimalMoves)
   const isPrecisionBonus = state.moves === state.optimalMoves
   ui.resultText.textContent = `Finished in ${state.moves} moves`
-  ui.rankText.textContent = `Rank ${rank}${isPrecisionBonus ? ' ◆' : ''}`
-  ui.rankText.className = isPrecisionBonus ? 'precision-bonus' : ''
+  ui.rankText.textContent = `Rank ${rank}`
+  ui.rankText.classList.toggle('precision-bonus', isPrecisionBonus)
   ui.efficiencyText.textContent = `Optimal route estimate: ${state.optimalMoves} moves`
-
-  if (isPrecisionBonus) {
-    const precisionMsg = document.createElement('p')
-    precisionMsg.className = 'precision-msg'
-    precisionMsg.textContent = '✨ Perfect route! ✨'
-    setTimeout(() => {
-      ui.efficiencyText.parentElement.insertBefore(precisionMsg, ui.efficiencyText.nextSibling)
-    }, 100)
-  }
-
-  const bestAfterWin = getBestForLevel(state.levelIndex)
-  ui.bestResultText.textContent = isNewBest
-    ? `New best for this level: ${bestAfterWin}`
-    : `Best for this level: ${bestAfterWin}`
+  ui.streakResultText.textContent = isPrecisionBonus
+    ? `Perfect route. Best streak this run: x${state.bestStreak}`
+    : `Best streak this run: x${state.bestStreak}`
 
   updateHud()
   showOverlay()
 }
 
-function moveCursor(dx, dy) {
+function moveCursor(dx, dy, stepCount = 1) {
   if (state.isWon) {
     return
   }
 
-  const next = applyMoveToState(
-    {
-      line: state.cursor.line,
-      col: state.cursor.col,
-      preferredCol: state.preferredCol
-    },
-    dx,
-    dy
-  )
+  let moved = false
+  for (let step = 0; step < stepCount; step += 1) {
+    const previousDistance = getDistanceToTarget()
 
-  if (!next) {
-    return
+    const next = applyMoveToState(
+      {
+        line: state.cursor.line,
+        col: state.cursor.col,
+        preferredCol: state.preferredCol
+      },
+      dx,
+      dy
+    )
+
+    if (!next) {
+      break
+    }
+
+    state.cursor.line = next.line
+    state.cursor.col = next.col
+    state.preferredCol = next.preferredCol
+    state.moves += 1
+    moved = true
+
+    const nextDistance = getDistanceToTarget()
+    updateStreak(previousDistance, nextDistance)
   }
 
-  state.cursor.line = next.line
-  state.cursor.col = next.col
-  state.preferredCol = next.preferredCol
-  state.moves += 1
+  if (!moved) {
+    return
+  }
 
   SoundSystem.playTick()
   renderFrame()
@@ -733,21 +856,26 @@ function setupLevel(index) {
   const wrappedIndex = (index + LEVELS.length) % LEVELS.length
   state.levelIndex = wrappedIndex
   const levelData = LEVELS[wrappedIndex]
+  state.levelData = levelData
   state.documentLines = linesFromParagraphText(levelData.text)
   state.wrappedLines = []
   state.cursor = { line: 0, col: 0 }
   state.preferredCol = 0
   state.moves = 0
+  state.streak = 0
+  state.bestStreak = 0
   state.isWon = false
 
-  state.target = chooseFlagTarget(state.documentLines)
+  state.target = chooseFlagTarget(state.documentLines, levelData.targetMode)
   reflowDocument(false)
   state.optimalMoves = computeOptimalMoves(state.target)
+  state.lastDistance = getDistanceToTarget()
 
   hideOverlay()
   ui.rankText.textContent = ''
   ui.efficiencyText.textContent = ''
-  ui.levelTitle.textContent = `Level ${wrappedIndex + 1} — ${levelData.title}`
+  ui.streakResultText.textContent = ''
+  ui.levelTitle.textContent = `Level ${wrappedIndex + 1} - ${levelData.difficulty}`
 
   renderFrame()
 
@@ -760,28 +888,29 @@ function setupLevel(index) {
 
 function handleKeyDown(event) {
   const key = event.key
+  const stepCount = event.shiftKey ? 3 : 1
 
   if (key === 'ArrowLeft') {
     event.preventDefault()
-    moveCursor(-1, 0)
+    moveCursor(-1, 0, stepCount)
     return
   }
 
   if (key === 'ArrowRight') {
     event.preventDefault()
-    moveCursor(1, 0)
+    moveCursor(1, 0, stepCount)
     return
   }
 
   if (key === 'ArrowUp') {
     event.preventDefault()
-    moveCursor(0, -1)
+    moveCursor(0, -1, stepCount)
     return
   }
 
   if (key === 'ArrowDown') {
     event.preventDefault()
-    moveCursor(0, 1)
+    moveCursor(0, 1, stepCount)
     return
   }
 
@@ -813,8 +942,6 @@ function bindUiEvents() {
     renderFrame()
   })
 }
-
-state.bestScores = loadBestScores()
 
 createLayout()
 bindUiEvents()
