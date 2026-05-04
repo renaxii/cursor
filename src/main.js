@@ -28,7 +28,6 @@ Modern laboratories test these principles with superconducting circuits, where c
   {
     title: 'Passage 03',
     difficulty: 'Skilled+',
-    challenge: 'Routing mission: weave between dense words and avoid over-shooting the target column.',
     targetMode: 'edge',
     text: `Cells use membranes to regulate transport between internal and external environments, and membrane proteins act as channels, pumps, and receptors that maintain concentration gradients required for metabolism.
 
@@ -39,7 +38,6 @@ Computer scientists model these interactions with graph algorithms, using networ
   {
     title: 'Passage 04',
     difficulty: 'Advanced',
-    challenge: 'Signal hunt: target is likely near punctuation in dense technical language.',
     targetMode: 'punctuation',
     text: `Security teams monitor authentication logs, endpoint telemetry, and network flow records to identify unusual behavior before attackers escalate privileges or move laterally across internal systems.
 
@@ -50,7 +48,6 @@ Effective defense relies on layered controls, rapid patch cycles, and realistic 
   {
     title: 'Passage 05',
     difficulty: 'Advanced+',
-    challenge: 'Long route mission: marker tends to spawn far from start across wrapped lines.',
     targetMode: 'far',
     text: `Climate researchers combine satellite observations, ocean buoy records, and paleoclimate proxies to estimate how temperature, precipitation, and atmospheric circulation respond to changing greenhouse gas concentrations.
 
@@ -61,7 +58,6 @@ Adaptation planning uses scenario ensembles, uncertainty intervals, and risk map
   {
     title: 'Passage 06',
     difficulty: 'Expert',
-    challenge: 'Column discipline: marker favors line ends, requiring careful horizontal control.',
     targetMode: 'edge-far',
     text: `Neural circuits process sensory input through distributed populations of cells whose firing patterns encode timing, intensity, and context before signals are integrated into perception and action.
 
@@ -72,7 +68,6 @@ Computational models test hypotheses about learning by comparing predicted spike
   {
     title: 'Passage 07',
     difficulty: 'Master',
-    challenge: 'High-pressure mission: marker appears in dense regions far from origin with minimal landmarks.',
     targetMode: 'mixed-hard',
     text: `Distributed services coordinate through message passing, replication protocols, and consensus algorithms that preserve correctness despite node failures, delayed packets, and partial network partitions.
 
@@ -83,7 +78,6 @@ Observability is essential: structured logs, traces, and high-cardinality metric
   {
     title: 'Passage 08',
     difficulty: 'Legend',
-    challenge: 'Final gauntlet: marker is chosen from extreme and punctuation-heavy positions.',
     targetMode: 'legend',
     text: `Interplanetary guidance solutions account for gravitational assists, finite thrust windows, and communication delay, requiring trajectory planners to update state estimates with sparse and noisy measurements.
 
