@@ -170,8 +170,8 @@ body {
 .text-grid {
   position: relative;
   font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(16px, 1.48vw, 19px);
-  line-height: 1.56;
+  font-size: clamp(12px, 1.25vw, 18px);
+  line-height: 1.48;
   letter-spacing: 0.01em;
   width: 100%;
   max-width: 100%;
@@ -188,8 +188,8 @@ body {
 
 .text-row {
   display: block;
-  min-height: 1.56em;
-  line-height: 1.56;
+  min-height: 1.48em;
+  line-height: 1.48;
   white-space: nowrap;
   transition: background-color 220ms ease;
   padding: 0 0.25em;

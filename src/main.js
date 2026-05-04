@@ -4,7 +4,7 @@ const app = document.querySelector('#app')
 
 const LEVELS = [
   {
-    title: 'Astronomy',
+    title: 'Passage 01',
     difficulty: 'Rookie',
     challenge: 'Warm-up mission: learn line transitions and stop exactly on the marker.',
     targetMode: 'random',
@@ -15,7 +15,7 @@ When a massive star exhausts nuclear fuel, gravity can collapse the core, and if
 Spectroscopy lets researchers measure composition, temperature, and velocity, and by comparing spectral lines scientists infer motion through Doppler shifts across distant stellar systems.`
   },
   {
-    title: 'Physics',
+    title: 'Passage 02',
     difficulty: 'Skilled',
     challenge: 'Precision mission: use vertical moves wisely to maintain momentum streaks.',
     targetMode: 'distance',
@@ -26,7 +26,7 @@ Quantum theory describes particles with probability amplitudes rather than fixed
 Modern laboratories test these principles with superconducting circuits, where careful isolation reduces thermal and electromagnetic noise so measurements remain reproducible.`
   },
   {
-    title: 'Biology',
+    title: 'Passage 03',
     difficulty: 'Skilled+',
     challenge: 'Routing mission: weave between dense words and avoid over-shooting the target column.',
     targetMode: 'edge',
@@ -37,7 +37,7 @@ In ecosystems, energy flows from producers to consumers and decomposers, while n
 Computer scientists model these interactions with graph algorithms, using network analysis to identify hubs, bottlenecks, and resilient pathways in biological and ecological systems.`
   },
   {
-    title: 'Cybersecurity',
+    title: 'Passage 04',
     difficulty: 'Advanced',
     challenge: 'Signal hunt: target is likely near punctuation in dense technical language.',
     targetMode: 'punctuation',
@@ -48,7 +48,7 @@ Blue team analysts correlate indicators from multiple sensors, compare process a
 Effective defense relies on layered controls, rapid patch cycles, and realistic incident simulations that expose weak assumptions long before a real intrusion occurs.`
   },
   {
-    title: 'Climate Systems',
+    title: 'Passage 05',
     difficulty: 'Advanced+',
     challenge: 'Long route mission: marker tends to spawn far from start across wrapped lines.',
     targetMode: 'far',
@@ -59,7 +59,7 @@ Regional impacts are uneven: some areas face prolonged drought and heat stress, 
 Adaptation planning uses scenario ensembles, uncertainty intervals, and risk maps so policymakers can prioritize investments with the greatest resilience payoff over decades.`
   },
   {
-    title: 'Neuroscience',
+    title: 'Passage 06',
     difficulty: 'Expert',
     challenge: 'Column discipline: marker favors line ends, requiring careful horizontal control.',
     targetMode: 'edge-far',
@@ -70,7 +70,7 @@ Modern experiments pair calcium imaging with closed-loop stimulation, allowing s
 Computational models test hypotheses about learning by comparing predicted spike statistics with observed recordings, revealing where assumptions about plasticity break down.`
   },
   {
-    title: 'Distributed Systems',
+    title: 'Passage 07',
     difficulty: 'Master',
     challenge: 'High-pressure mission: marker appears in dense regions far from origin with minimal landmarks.',
     targetMode: 'mixed-hard',
@@ -81,7 +81,7 @@ Engineers balance consistency, availability, and latency by selecting data model
 Observability is essential: structured logs, traces, and high-cardinality metrics help teams detect emergent bottlenecks and verify that remediation steps actually reduce tail latency.`
   },
   {
-    title: 'Deep Space Navigation',
+    title: 'Passage 08',
     difficulty: 'Legend',
     challenge: 'Final gauntlet: marker is chosen from extreme and punctuation-heavy positions.',
     targetMode: 'legend',
@@ -195,15 +195,14 @@ function createLayout() {
       <header class="app-topbar sticky top-0 z-10 border-b border-slate-300/70 px-4 py-2 backdrop-blur sm:px-6">
         <div class="topbar-row">
           <div class="brand-wrap">
-            <span class="brand-orb" aria-hidden="true"></span>
             <div>
-              <h1 class="brand-title">Cursor Quest</h1>
-              <span class="brand-subtitle" id="levelTitle">Text Navigation Puzzle</span>
+              <h1 class="brand-title">Cursor</h1>
+              <span class="brand-subtitle" id="levelTitle">Passage 01</span>
             </div>
           </div>
 
           <div class="score-rack" aria-label="Run stats">
-            <span class="hud-pill" id="levelLabel">Level 1 / ${LEVELS.length}</span>
+            <span class="hud-pill" id="levelLabel">Passage 01 / ${String(LEVELS.length).padStart(2, '0')}</span>
             <span class="hud-pill" id="movesLabel">Moves 0</span>
             <span class="hud-pill hud-pill-streak" id="streakLabel">Streak x0</span>
             <span class="hud-pill hud-pill-heat" id="heatLabel">Flow 0%</span>
@@ -217,7 +216,7 @@ function createLayout() {
           <div class="editor-shell">
             <div id="editorViewport" class="editor-viewport relative h-full overflow-y-auto overflow-x-hidden">
               <div class="editor-gutter sticky left-0 top-0 z-10 h-full w-10"></div>
-              <div id="textSurface" class="text-surface absolute inset-0 overflow-visible pl-14 pr-12 pt-12 pb-20">
+              <div id="textSurface" class="text-surface absolute inset-0 overflow-visible pl-9 pr-7 pt-10 pb-20 sm:pl-14 sm:pr-12 sm:pt-12">
                 <div id="textGrid" class="text-grid" aria-label="Game text"></div>
               </div>
             </div>
@@ -229,13 +228,13 @@ function createLayout() {
               <div class="info-block mt-3">
                 <p class="text-xs uppercase tracking-[0.16em] text-slate-500">Flag Position</p>
                 <p id="targetWordLabel" class="mt-2 text-base font-semibold text-slate-800">Line 1, Col 1</p>
-                <p id="targetMetaLabel" class="mt-2 text-xs text-slate-500">Match cursor to the red flag.</p>
+                <p id="targetMetaLabel" class="mt-2 text-xs text-slate-500">Reach the exact red flag position.</p>
               </div>
 
               <p class="panel-label mt-8">Session</p>
               <div class="info-list mt-3">
-                <div class="info-item"><span>Current Level</span><span id="panelLevelValue">1</span></div>
-                <div class="info-item"><span>Difficulty</span><span id="panelDifficultyValue">Rookie</span></div>
+                <div class="info-item"><span>Passage</span><span id="panelLevelValue">01</span></div>
+                <div class="info-item"><span>Pace</span><span id="panelDifficultyValue">Rookie</span></div>
                 <div class="info-item"><span>Moves</span><span id="panelMovesValue">0</span></div>
                 <div class="info-item"><span>Streak</span><span id="panelStreakValue">0</span></div>
                 <div class="info-item"><span>Optimal</span><span id="panelOptimalValue">0</span></div>
@@ -245,9 +244,9 @@ function createLayout() {
                 <p class="panel-label">How to Play</p>
                 <div class="shortcut-list mt-3">
                   <div class="shortcut-item">Arrow Keys <span>Move the cursor</span></div>
-                  <div class="shortcut-item">Editor Navigation <span>Move like a document cursor</span></div>
-                  <div class="shortcut-item">Red Flag <span>Reach the exact line and column</span></div>
-                  <div class="shortcut-item">Efficiency <span>Minimize moves for a better rank</span></div>
+                  <div class="shortcut-item">Line Wrap <span>Keep going across wrapped text</span></div>
+                  <div class="shortcut-item">Red Flag <span>Land on the exact line and column</span></div>
+                  <div class="shortcut-item">Efficiency <span>Fewer moves keeps the run cleaner</span></div>
                 </div>
               </div>
             </div>
@@ -419,7 +418,7 @@ function measureCharWidth() {
 function getMaxColumns() {
   const width = ui.textGrid.getBoundingClientRect().width || ui.editorViewport.getBoundingClientRect().width
   const charWidth = measureCharWidth()
-  return Math.max(8, Math.floor(width / charWidth))
+  return Math.max(4, Math.floor((width - charWidth * 2) / charWidth))
 }
 
 function wrapLineByWords(line, maxCols) {
@@ -433,19 +432,42 @@ function wrapLineByWords(line, maxCols) {
   let currentStartCol = 0
   let logicalCol = 0
 
+  function pushCurrent() {
+    if (current.length > 0) {
+      wrapped.push({ text: current, startCol: currentStartCol })
+    }
+  }
+
+  function pushWordChunks(word, startCol) {
+    for (let offset = 0; offset < word.length; offset += maxCols) {
+      wrapped.push({
+        text: word.slice(offset, offset + maxCols),
+        startCol: startCol + offset
+      })
+    }
+  }
+
   words.forEach((word, index) => {
     const separator = current.length === 0 ? '' : ' '
     const candidate = `${current}${separator}${word}`
 
     if (current.length === 0) {
-      current = word
-      currentStartCol = logicalCol
+      if (word.length > maxCols) {
+        pushWordChunks(word, logicalCol)
+      } else {
+        current = word
+        currentStartCol = logicalCol
+      }
     } else if (candidate.length <= maxCols) {
       current = candidate
     } else {
-      wrapped.push({ text: current, startCol: currentStartCol })
-      current = word
-      currentStartCol = logicalCol
+      pushCurrent()
+      if (word.length > maxCols) {
+        pushWordChunks(word, logicalCol)
+      } else {
+        current = word
+        currentStartCol = logicalCol
+      }
     }
 
     logicalCol += word.length
@@ -729,7 +751,7 @@ function renderTextGrid() {
 }
 
 function updateHud() {
-  ui.levelLabel.textContent = `Level ${state.levelIndex + 1} / ${LEVELS.length}`
+  ui.levelLabel.textContent = `Passage ${String(state.levelIndex + 1).padStart(2, '0')} / ${String(LEVELS.length).padStart(2, '0')}`
   ui.movesLabel.textContent = `Moves ${state.moves}`
   ui.streakLabel.textContent = `Streak x${state.streak}`
 
@@ -737,7 +759,7 @@ function updateHud() {
   ui.heatLabel.textContent = `Flow ${flowPercent}%`
   ui.heatLabel.classList.toggle('hud-pill-hot', flowPercent >= 72)
 
-  ui.panelLevelValue.textContent = String(state.levelIndex + 1)
+  ui.panelLevelValue.textContent = String(state.levelIndex + 1).padStart(2, '0')
   ui.panelDifficultyValue.textContent = state.levelData?.difficulty ?? 'Rookie'
   ui.panelMovesValue.textContent = String(state.moves)
   ui.panelStreakValue.textContent = String(state.streak)
@@ -745,8 +767,7 @@ function updateHud() {
 
   if (state.target) {
     ui.targetWordLabel.textContent = `Line ${state.target.line + 1}, Col ${state.target.col + 1}`
-    const challengeText = state.levelData?.challenge ?? 'Move the cursor to this exact coordinate.'
-    ui.targetMetaLabel.textContent = challengeText
+    ui.targetMetaLabel.textContent = 'Reach the exact red flag position.'
   }
 }
 
@@ -865,7 +886,7 @@ function setupLevel(index) {
   ui.rankText.textContent = ''
   ui.efficiencyText.textContent = ''
   ui.streakResultText.textContent = ''
-  ui.levelTitle.textContent = `Level ${wrappedIndex + 1} - ${levelData.difficulty}`
+  ui.levelTitle.textContent = levelData.title ?? `Passage ${wrappedIndex + 1}`
 
   renderFrame()
 
